@@ -21,7 +21,7 @@ namespace Glovebox.Graphics.Drivers {
         public void Write(ulong[] inputGreen, ulong[] inputRed) {
 
             // perform any required display rotations
-            for (int rotations = 0; rotations < (int)rotate; rotations++) {
+            for (int rotations = 0; rotations < (int)rotate[0]; rotations++) {
                 for (int panel = 0; panel < inputGreen.Length; panel++) {
                     inputGreen[panel] = RotateAntiClockwise(inputGreen[panel]);
                     inputRed[panel] = RotateAntiClockwise(inputRed[panel]);

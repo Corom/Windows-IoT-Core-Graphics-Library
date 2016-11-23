@@ -9,7 +9,8 @@ namespace LedHost {
     public sealed class LedMonoMatrix {
 
         public async void Start() {
-            var driver = new Ht16K33(new byte[] { 0x70, 0x72 }, Ht16K33.Rotate.None);
+            //var driver = new Ht16K33(new byte[] { 0x73, 0x74 }, new[] { Ht16K33.Rotate.None, Ht16K33.Rotate.D180 }, doubleWide: true);
+            var driver = new Ht16K33(new byte[] { 0x70, 0x71 }, Ht16K33.Rotate.None);
 
             LED8x8Matrix matrix = new LED8x8Matrix(driver);
 

@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Glovebox.Graphics {
 
 
@@ -307,11 +309,11 @@ namespace Glovebox.Graphics {
         /// <param name="pixelColour">Colour of the pixel to show</param>
         /// <param name="cycles">Number of whole cycles to rotate</param>
         /// <param name="stepDelay">Delay between steps (ms)</param>
-        public void SpinColour(Pixel pixelColour, int cycles = 1, int stepDelay = 250) {
-            SpinColourOnBackground(pixelColour, Colour.Black, cycles, stepDelay);
+        public Task SpinColour(Pixel pixelColour, int cycles = 1, int stepDelay = 250) {
+            return SpinColourOnBackground(pixelColour, Colour.Black, cycles, stepDelay);
         }
 
-        public void SpinColourOnBackground(Pixel pixelColour, Pixel backgroundColour, int cycles = 1, int stepDelay = 250) {
+        public async Task SpinColourOnBackground(Pixel pixelColour, Pixel backgroundColour, int cycles = 1, int stepDelay = 250) {
             if (cycles < 0 || stepDelay < 0) { return; }
 
             FrameSet(backgroundColour);
@@ -323,12 +325,12 @@ namespace Glovebox.Graphics {
                 for (int j = 0; j < pixelCount; j++) {
                     FrameShift();
                     FrameDraw();
-                    Util.Delay(stepDelay);
+                    await Task.Delay(stepDelay);
                 }
             }
         }
 
-        protected void Blink(int blinkDelay, int repeat) {
+        protected async Task Blink(int blinkDelay, int repeat) {
             if (blinkDelay < 0 || repeat < 0) { return; }
 
             if (blinkFrame[0] == null) {
@@ -338,9 +340,9 @@ namespace Glovebox.Graphics {
             }
 
             for (int i = 0; i < repeat; i++) {
-                Util.Delay(blinkDelay);
+                await Task.Delay(blinkDelay);
                 FrameDraw(blinkFrame);
-                Util.Delay(blinkDelay);
+                await Task.Delay(blinkDelay);
                 FrameDraw();
             }
         }

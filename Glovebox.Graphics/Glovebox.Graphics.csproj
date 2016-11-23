@@ -117,7 +117,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Components\SevenSegmentDisplay.cs" />
     <Compile Include="SevenSegmentDisplay\SevenSegmentDisplayBase.cs" />
-    <Compile Include="Util.cs" />
     <Content Include="Properties\LightLibrary.rd.xml" />
   </ItemGroup>
   <ItemGroup>

@@ -1,11 +1,12 @@
 using Glovebox.Graphics;
+using System.Threading.Tasks;
 
 namespace Glovebox.Graphics.Grid {
     public class Grid8x8 : GridBase {
 
 
         #region Font Definition
-        public ulong[] fontSimple = new ulong[] {
+        public static ulong[] fontSimple = new ulong[] {
             0x0000000000000000, // space
             0x0008000808080808, // !            
             0x0000000000001414, // "
@@ -118,36 +119,37 @@ namespace Glovebox.Graphics.Grid {
             : base(8, 8, panels) {
         }
 
+
         #region Scroll string primatives
 
-        public void ScrollStringInFromRight(string characters)
+        public Task ScrollStringInFromRight(string characters)
         {
-            ScrollStringInFromRight(characters, 0, Led.On);
+            return ScrollStringInFromRight(characters, 0, Led.On);
         }
 
-        public void ScrollStringInFromLeft(string characters)
+        public Task ScrollStringInFromLeft(string characters)
         {
-            ScrollStringInFromLeft(characters, 0, Led.On);
+            return ScrollStringInFromLeft(characters, 0, Led.On);
         }
 
-        public void ScrollStringInFromRight(string characters, int pause) {
-            ScrollStringInFromRight(characters, pause, Led.On);
+        public Task ScrollStringInFromRight(string characters, int pause) {
+            return ScrollStringInFromRight(characters, pause, Led.On);
         }
 
-        public void ScrollStringInFromLeft(string characters, int pause)
+        public Task ScrollStringInFromLeft(string characters, int pause)
         {
-            ScrollStringInFromLeft(characters, pause, Led.On);
+            return ScrollStringInFromLeft(characters, pause, Led.On);
         }
 
-        public void ScrollStringInFromRight(string characters, int pause, Pixel colour) {
-            ScrollStringInFromRight(characters, pause, new Pixel[] { colour });
+        public Task ScrollStringInFromRight(string characters, int pause, Pixel colour) {
+            return ScrollStringInFromRight(characters, pause, new Pixel[] { colour });
         }
 
-        public void ScrollStringInFromLeft(string characters, int pause, Pixel colour) {
-            ScrollStringInFromLeft(characters, pause, new Pixel[] { colour });
+        public Task ScrollStringInFromLeft(string characters, int pause, Pixel colour) {
+            return ScrollStringInFromLeft(characters, pause, new Pixel[] { colour });
         }
 
-        public void ScrollStringInFromRight(string characters, int pause, Pixel[] colour) {
+        public async Task ScrollStringInFromRight(string characters, int pause, Pixel[] colour) {
             ushort cycleColour = 0;
 
             // loop through each chacter
@@ -155,13 +157,13 @@ namespace Glovebox.Graphics.Grid {
 
                 char charactor = characters.Substring(ch, 1)[0];
                 if (charactor >= ' ' && charactor <= 'z') {
-                    ScrollBitmapInFromRight(fontSimple[charactor - 32], pause, colour[cycleColour % colour.Length]);
+                    await ScrollBitmapInFromRight(fontSimple[charactor - 32], pause, colour[cycleColour % colour.Length]);
                     cycleColour++;
                 }
             }
         }
 
-        public void ScrollStringInFromLeft(string characters, int pause, Pixel[] colour) {
+        public async Task ScrollStringInFromLeft(string characters, int pause, Pixel[] colour) {
             ushort cycleColour = 0;
 
             // loop through each chacter
@@ -169,7 +171,7 @@ namespace Glovebox.Graphics.Grid {
 
                 char charactor = characters.Substring(ch, 1)[0];
                 if (charactor >= ' ' && charactor <= 'z') {
-                    ScrollBitmapInFromLeft(fontSimple[charactor - 32], pause, colour[cycleColour % colour.Length]);
+                    await ScrollBitmapInFromLeft(fontSimple[charactor - 32], pause, colour[cycleColour % colour.Length]);
                     cycleColour++;
                 }
             }
@@ -179,24 +181,24 @@ namespace Glovebox.Graphics.Grid {
 
         #region Scroll Character primatives
 
-        public void ScrollCharacterFromRight(char charactor, int pause) {
-            ScrollCharacterFromRight(charactor, pause, Led.On);
+        public Task ScrollCharacterFromRight(char charactor, int pause) {
+            return ScrollCharacterFromRight(charactor, pause, Led.On);
         }
 
 
-        public void ScrollCharacterFromRight(char charactor, int pause, Pixel colour) {
+        public async Task ScrollCharacterFromRight(char charactor, int pause, Pixel colour) {
             if (charactor >= ' ' && charactor <= 'z') {
-                ScrollBitmapInFromRight(fontSimple[charactor - 32], pause, colour);
+                await ScrollBitmapInFromRight(fontSimple[charactor - 32], pause, colour);
             }
         }
 
-        public void ScrollCharacterFromLeft(char charactor, int pause) {
-            ScrollCharacterFromLeft(charactor, pause, Led.On);
+        public Task ScrollCharacterFromLeft(char charactor, int pause) {
+            return ScrollCharacterFromLeft(charactor, pause, Led.On);
         }
 
-        public void ScrollCharacterFromLeft(char charactor, int pause, Pixel colour) {
+        public async Task ScrollCharacterFromLeft(char charactor, int pause, Pixel colour) {
             if (charactor >= ' ' && charactor <= 'z') {
-                ScrollBitmapInFromLeft(fontSimple[charactor - 32], pause, colour);
+                await ScrollBitmapInFromLeft(fontSimple[charactor - 32], pause, colour);
             }
         }
 
@@ -204,46 +206,46 @@ namespace Glovebox.Graphics.Grid {
 
         #region Scroll symbol primatives
 
-        public void ScrollSymbolInFromRight(Symbols sym, int pause) {
-            ScrollBitmapInFromRight((ulong)sym, pause, Led.On);
+        public Task ScrollSymbolInFromRight(Symbols sym, int pause) {
+            return ScrollBitmapInFromRight((ulong)sym, pause, Led.On);
         }
 
-        public void ScrollSymbolInFromRight(Symbols sym, int pause, Pixel colour) {
-            ScrollBitmapInFromRight((ulong)sym, pause, colour);
+        public Task ScrollSymbolInFromRight(Symbols sym, int pause, Pixel colour) {
+            return ScrollBitmapInFromRight((ulong)sym, pause, colour);
         }
 
-        public void ScrollSymbolInFromLeft(Symbols sym, int pause) {
-            ScrollBitmapInFromLeft((ulong)sym, pause, Led.On);
+        public Task ScrollSymbolInFromLeft(Symbols sym, int pause) {
+            return ScrollBitmapInFromLeft((ulong)sym, pause, Led.On);
         }
 
-        public void ScrollSymbolInFromLeft(Symbols sym, int pause, Pixel colour) {
-            ScrollBitmapInFromLeft((ulong)sym, pause, colour);
+        public Task ScrollSymbolInFromLeft(Symbols sym, int pause, Pixel colour) {
+            return ScrollBitmapInFromLeft((ulong)sym, pause, colour);
         }
 
-        public void ScrollSymbolInFromRight(Symbols[] sym, int pause, Pixel colour) {
+        public async Task ScrollSymbolInFromRight(Symbols[] sym, int pause, Pixel colour) {
             foreach (var item in sym) {
-                ScrollBitmapInFromRight((ulong)item, pause, colour);
+                await ScrollBitmapInFromRight((ulong)item, pause, colour);
             }
         }
 
-        public void ScrollSymbolInFromLeft(Symbols[] sym, int pause, Pixel colour) {
+        public async Task ScrollSymbolInFromLeft(Symbols[] sym, int pause, Pixel colour) {
             foreach (var item in sym) {
-                ScrollBitmapInFromLeft((ulong)item, pause, colour);
+                await ScrollBitmapInFromLeft((ulong)item, pause, colour);
             }
         }
 
-        public void ScrollSymbolInFromRight(Symbols[] sym, int pause, Pixel[] colourPalette) {
+        public async Task ScrollSymbolInFromRight(Symbols[] sym, int pause, Pixel[] colourPalette) {
             ushort cycleColour = 0;
             foreach (var item in sym) {
-                ScrollBitmapInFromRight((ulong)item, pause, colourPalette[cycleColour % colourPalette.Length]);
+                await ScrollBitmapInFromRight((ulong)item, pause, colourPalette[cycleColour % colourPalette.Length]);
                 cycleColour++;
             }
         }
 
-        public void ScrollSymbolInFromLeft(Symbols[] sym, int pause, Pixel[] colourPalette) {
+        public async Task ScrollSymbolInFromLeft(Symbols[] sym, int pause, Pixel[] colourPalette) {
             ushort cycleColour = 0;
             foreach (var item in sym) {
-                ScrollBitmapInFromLeft((ulong)item, pause, colourPalette[cycleColour % colourPalette.Length]);
+                await ScrollBitmapInFromLeft((ulong)item, pause, colourPalette[cycleColour % colourPalette.Length]);
                 cycleColour++;
             }
         }
@@ -252,7 +254,7 @@ namespace Glovebox.Graphics.Grid {
 
         #region Scroll Bitmaps left and right
 
-        public virtual void ScrollBitmapInFromRight(ulong bitmap, int pause, Pixel colour) {
+        public virtual async Task ScrollBitmapInFromRight(ulong bitmap, int pause, Pixel colour) {
             int pos = 0;
             ulong mask;
             bool pixelFound = false;
@@ -260,8 +262,8 @@ namespace Glovebox.Graphics.Grid {
             // space character ?
             if (bitmap == 0)
             {
-                DrawShiftLeft(pause);
-                DrawShiftLeft(pause);
+                await DrawShiftLeft(pause);
+                await DrawShiftLeft(pause);
                 return;
             }
 
@@ -279,23 +281,23 @@ namespace Glovebox.Graphics.Grid {
                     }
                 }
                 if (pixelFound) {
-                    DrawShiftLeft(pause);
+                    await DrawShiftLeft(pause);
                 }
             }
             //blank character space
-            DrawShiftLeft(pause);
+            await DrawShiftLeft(pause);
         }
 
-        private void DrawShiftLeft(int pause)
+        private async Task DrawShiftLeft(int pause)
         {
             if (pause > 0) {
                 FrameDraw();
-                Util.Delay(pause);
+                await Task.Delay(pause);
             }
             FrameShiftLeft();          
         }
 
-        public virtual void ScrollBitmapInFromLeft(ulong bitmap, int pause, Pixel colour) {
+        public virtual async Task ScrollBitmapInFromLeft(ulong bitmap, int pause, Pixel colour) {
             int pos = 0;
             ulong mask;
             bool pixelFound = false;
@@ -304,8 +306,8 @@ namespace Glovebox.Graphics.Grid {
             // space character ?
             if (bitmap == 0)
             {
-                DrawShiftRight(pause);
-                DrawShiftRight(pause);
+                await DrawShiftRight(pause);
+                await DrawShiftRight(pause);
                 return;
             }
 
@@ -323,19 +325,19 @@ namespace Glovebox.Graphics.Grid {
                     }
                 }
                 if (pixelFound) {
-                    DrawShiftRight(pause);
+                    await DrawShiftRight(pause);
                 }
             }
             //blank character space
-            DrawShiftRight(pause);
+            await DrawShiftRight(pause);
         }
 
-        private void DrawShiftRight(int pause)
+        private async Task DrawShiftRight(int pause)
         {
             if (pause > 0)
             {
                 FrameDraw();
-                Util.Delay(pause);
+                await Task.Delay(pause);
             }
             FrameShiftRight();
         }
@@ -344,16 +346,22 @@ namespace Glovebox.Graphics.Grid {
 
         #region Draw Primatives
 
+        public async Task DrawString(string characters)
+        {
+            await ScrollStringInFromLeft(characters, 0);
+            FrameDraw();
+        }
+       
 
-        public void DrawString(string characters, int pause, int panel = 0) {
-            DrawString(characters, Led.On, pause, panel);
+        public Task DrawString(string characters, int pause, int panel = 0) {
+            return DrawString(characters, Led.On, pause, panel);
         }
 
-        public void DrawString(string characters, Pixel colour, int pause, int panel = 0) {
-            DrawString(characters, new Pixel[] { colour }, pause, panel);
+        public Task DrawString(string characters, Pixel colour, int pause, int panel = 0) {
+            return DrawString(characters, new Pixel[] { colour }, pause, panel);
         }
 
-        public void DrawString(string characters, Pixel[] colour, int pause, int panel = 0) {
+        public async Task DrawString(string characters, Pixel[] colour, int pause, int panel = 0) {
             ushort cycleColour = 0;
             char c;
             for (int i = 0; i < characters.Length; i++) {
@@ -361,7 +369,7 @@ namespace Glovebox.Graphics.Grid {
                 if (c >= ' ' && c <= 'z') {
                     DrawLetter(c, colour[cycleColour % colour.Length], panel);
                     FrameDraw();
-                    Util.Delay(pause);
+                    await Task.Delay(pause);
                     cycleColour++;
                 }
             }
@@ -384,12 +392,12 @@ namespace Glovebox.Graphics.Grid {
             DrawBitmap(letter, colour, panel);
         }
 
-        public void DrawSymbol(Symbols[] sym, Pixel[] colour, int pause, int panel = 0) {
+        public async Task DrawSymbol(Symbols[] sym, Pixel[] colour, int pause, int panel = 0) {
             ushort cycleColour = 0;
             foreach (var item in sym) {
                 DrawBitmap((ulong)item, colour[cycleColour], panel);
                 FrameDraw();
-                Util.Delay(pause);
+                await Task.Delay(pause);
                 cycleColour++;
             }
         }

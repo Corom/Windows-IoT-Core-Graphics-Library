@@ -68,6 +68,13 @@ namespace Glovebox.Graphics.Grid {
             Frame[pos] = pixel;
         }
 
+        public void FrameSet(Pixel[] image)
+        {
+            for (int i =0; i< image.Length; i++)
+                FrameSet(image[i], i);
+        }
+
+
         public void ColumnRollRight(int rowIndex) {
             if (rowIndex < 0) { return; }
 

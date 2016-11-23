@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.I2c;
@@ -33,6 +34,9 @@ namespace Glovebox.Graphics.Drivers {
         private byte currentBlinkrate = 0x00;  // off
         private byte[] blinkRates = { 0x00, 0x02, 0x04, 0x06 };  //off, 2hz, 1hz, 0.5 hz for off, fast, medium, slow
 
+        // is the screen 16 columns wide such as the adafruit 16x8 panel.
+        private int panelsPerDevice;
+
 
         private byte brightness;
 
@@ -41,10 +45,11 @@ namespace Glovebox.Graphics.Drivers {
             D90 = 1,
             D180 = 2,
         }
-        protected Rotate rotate = Rotate.None;
+        protected Rotate[] rotate;
 
 
         #endregion
+
 
         /// <summary>
         /// Initializes a new instance of the Ht16K33 I2C controller as found on the Adafriut Mini LED Matrix.
@@ -52,11 +57,23 @@ namespace Glovebox.Graphics.Drivers {
         /// <param name="frame">On or Off - defaults to On</param>
         /// <param name="brightness">Between 0 and 15</param>
         /// <param name="blinkrate">Defaults to Off.  Blink rates Fast = 2hz, Medium = 1hz, slow = 0.5hz</param>
-        public Ht16K33(byte[] I2CAddress = null, Rotate rotate = Rotate.None, Display frame = LedDriver.Display.On, byte brightness = 2, BlinkRate blinkrate = BlinkRate.Off, string I2cControllerName = "I2C1") {
+        public Ht16K33(byte[] I2CAddress = null, Rotate rotate = Rotate.None, Display frame = LedDriver.Display.On, byte brightness = 2, BlinkRate blinkrate = BlinkRate.Off, string I2cControllerName = "I2C1", bool doubleWide = false)
+            : this(I2CAddress, new[] { rotate }, frame, brightness, blinkrate, I2cControllerName, doubleWide)
+        {
+        }
 
+        /// <summary>
+        /// Initializes a new instance of the Ht16K33 I2C controller as found on the Adafriut Mini LED Matrix.
+        /// </summary>
+        /// <param name="frame">On or Off - defaults to On</param>
+        /// <param name="brightness">Between 0 and 15</param>
+        /// <param name="blinkrate">Defaults to Off.  Blink rates Fast = 2hz, Medium = 1hz, slow = 0.5hz</param>
+        public Ht16K33(byte[] I2CAddress = null, Rotate[] rotate = null, Display frame = LedDriver.Display.On, byte brightness = 2, BlinkRate blinkrate = BlinkRate.Off, string I2cControllerName = "I2C1", bool doubleWide = false) {
+
+            this.panelsPerDevice = doubleWide ? 2 : 1;
             Columns = 8;
             Rows = 8;
-            this.rotate = rotate;
+
             this.brightness = brightness;
             this.I2cControllerName = I2cControllerName;
 
@@ -67,8 +84,18 @@ namespace Glovebox.Graphics.Drivers {
                 this.I2CAddress = I2CAddress;
             }
 
-            this.PanelsPerFrame = this.I2CAddress.Length;
-            this.i2cDevice = new I2cDevice[PanelsPerFrame];
+            if (rotate != null && rotate.Length != 1 && rotate.Length != I2CAddress.Length)
+                throw new ArgumentException("You must specify a rotation for each i2c device");
+
+            if (rotate == null)
+                rotate = Enumerable.Repeat(Rotate.None, I2CAddress.Length).ToArray();
+            else if (rotate.Length == 1 && I2CAddress.Length > 1)
+                rotate = Enumerable.Repeat(rotate[1], I2CAddress.Length).ToArray();
+            else
+                this.rotate = rotate;
+
+            this.PanelsPerFrame = this.I2CAddress.Length * (doubleWide ? 2 : 1);
+            this.i2cDevice = new I2cDevice[this.I2CAddress.Length];
 
             currentFrameState = frameStates[(byte)frame];
             currentBlinkrate = blinkRates[(byte)blinkrate];
@@ -77,7 +104,7 @@ namespace Glovebox.Graphics.Drivers {
         }
 
         private void Initialize() {
-            for (int panel = 0; panel < PanelsPerFrame; panel++) {
+            for (int panel = 0; panel < i2cDevice.Length; panel++) {
                 Task.Run(() => I2cConnect(panel)).Wait();
             }
             InitPanels();
@@ -128,7 +155,7 @@ namespace Glovebox.Graphics.Drivers {
         }
 
         private void WriteAll(byte[] data) {
-            for (int panel = 0; panel < PanelsPerFrame; panel++) {
+            for (int panel = 0; panel < i2cDevice.Length; panel++) {
                 i2cDevice[panel].Write(data);
             }
         }
@@ -139,15 +166,33 @@ namespace Glovebox.Graphics.Drivers {
 
         public void Write(ulong[] input) {
             // perform any required display rotations
-            for (int rotations = 0; rotations < (int)rotate; rotations++) {
-                for (int panel = 0; panel < input.Length; panel++) {
-                    input[panel] = RotateAntiClockwise(input[panel]);
+            for (int d = 0; d < i2cDevice.Length; d++)
+            {
+                for (int p = 0; p < panelsPerDevice; p++)
+                { 
+                    var panel = d * panelsPerDevice + p;
+                    for (int rotations = 0; rotations < (int)rotate[d]; rotations++) {
+                        input[panel] = RotateAntiClockwise(input[panel]);
+                    }
+                }
+                
+                // for double wide displays that are flipped we need to swap the panels
+                if (panelsPerDevice == 2 && rotate[d] == Rotate.D180)
+                {
+                    var panel = d * panelsPerDevice;
+                    var left = input[panel];
+                    input[panel] = input[panel + 1];
+                    input[panel + 1] = left;
                 }
             }
 
-            for (int p = 0; p < input.Length; p++) {
-                DrawBitmap(input[p]);
-                i2cDevice[p].Write(Frame);
+            for (int d = 0; d < i2cDevice.Length; d++) {
+                int panel = d * panelsPerDevice;
+                DrawBitmap(input[panel]);
+                if (panelsPerDevice == 2)
+                    DrawBitmap(input[panel + 1], 2);
+
+                i2cDevice[d].Write(Frame);
             }
         }
 
@@ -168,21 +213,22 @@ namespace Glovebox.Graphics.Drivers {
         }
 
         void IDisposable.Dispose() {
-            for (int panel = 0; panel < PanelsPerFrame; panel++) {
+            for (int panel = 0; panel < i2cDevice.Length; panel++) {
                 i2cDevice[panel].Dispose();
             }
         }
 
-        private void DrawBitmap(ulong bitmap) {
+        private void DrawBitmap(ulong bitmap, int offset = 1) {
             for (ushort row = 0; row < Rows; row++) {
-                Frame[row * 2 + 1] = FixBitOrder((byte)(bitmap >> (row * Columns)));
+                Frame[row * 2 + offset] = FixBitOrder((byte)(bitmap >> (row * Columns)));
             }
         }
 
         // Fix bit order problem with the ht16K33 controller or Adafruit 8x8 matrix
         // Bits offset by 1, roll bits forward by 1, replace 8th bit with the 1st 
         private byte FixBitOrder(byte b) {
-            return (byte)(b >> 1 | (b << 7));
+            // note: for Adafruits 16x8 panels this bit shift is not needed
+            return panelsPerDevice == 2 ? b : (byte)(b >> 1 | (b << 7));
         }
 
         protected ulong RotateAntiClockwise(ulong input) {
