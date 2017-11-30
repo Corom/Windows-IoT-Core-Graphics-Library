@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.IoT.Lightning.Providers;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Devices;
 using Windows.Devices.Enumeration;
 using Windows.Devices.I2c;
 
@@ -115,9 +117,20 @@ namespace Glovebox.Graphics.Drivers {
                 var settings = new I2cConnectionSettings(I2CAddress[panel]);
                 settings.BusSpeed = I2cBusSpeed.FastMode;
 
-                string aqs = I2cDevice.GetDeviceSelector(I2cControllerName);  /* Find the selector string for the I2C bus controller                   */
-                var dis = await DeviceInformation.FindAllAsync(aqs);            /* Find the I2C bus controller device with our selector string           */
-                i2cDevice[panel] = await I2cDevice.FromIdAsync(dis[0].Id, settings);    /* Create an I2cDevice with our selected bus controller and I2C settings */
+                // If the system is using the Lightning memory mapped driver ther use the Lightning I2CProvider
+                if (LightningProvider.IsLightningEnabled)
+                {
+                    //LowLevelDevicesController.DefaultProvider = LightningProvider.GetAggregateProvider();
+                    var i2cControllers = await I2cController.GetControllersAsync(LightningI2cProvider.GetI2cProvider());
+                    i2cDevice[panel] = i2cControllers[0].GetDevice(settings);
+                }
+                else
+                {
+                    // Otherwise, if the inbox provider will continue to be the default
+                    string aqs = I2cDevice.GetDeviceSelector();  /* Find the selector string for the I2C bus controller                   */
+                    var dis = (await DeviceInformation.FindAllAsync(aqs)).ToArray();            /* Find the I2C bus controller device with our selector string           */
+                    i2cDevice[panel] = await I2cDevice.FromIdAsync(dis[0].Id, settings);    /* Create an I2cDevice with our selected bus controller and I2C settings */
+                }
             }
             catch (Exception e) {
                 throw new Exception("ht16k33 initisation problem: " + e.Message);

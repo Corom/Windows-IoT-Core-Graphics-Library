@@ -63,7 +63,7 @@ namespace Glovebox.Graphics {
 
         private readonly int pixelCount;
 
-        public int Length {
+        public int Length { 
             get { return pixelCount; }
         }
 
